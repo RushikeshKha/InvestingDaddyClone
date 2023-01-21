@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Option Chain</title>
+</head>
+<style>
+    #customers {
+        font-family: Arial, Helvetica, sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    #customers td,
+    #customers th {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: center;
+    }
+
+    #customers tr:nth-child(even) {
+        background-color: #f2f2f2;
+    }
+
+    #customers tr:hover {
+        background-color: #ddd;
+    }
+
+    #customers th {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        text-align: left;
+        background-color: #04AA6D;
+        color: white;
+    }
+
+    .red {
+        background-color: #F16029;
+    }
+
+    .second_high {
+        background-color: #F1CC4F;
+    }
+
+    .sup {
+        background-color: #2DB40B;
+    }
+
+    .btn {
+        position: sticky;
+        top: 0;
+        background-color: white;
+    }
+    .bigbtn {
+        width: 100px;
+        height: 50px
+    }
+</style>
+
+<body>
+    <div id="container">
+        <div class="header btn">
+            <div class="head_head">
+                <button onclick="getdata('/')" class="btn bigbtn">clcik</button>
+            <button onclick="play()" class="btn bigbtn">play</button>
+            <input type="number" id="inp" class="btn" value="0">
+            <button onclick="update()">Update localstoreage</button>
+            </div>
+            
+            <div class="btn1">strength
+                <a>call volume: </a>
+                <a class="btn" id="callv"></a>
+                <a>callOI chng: </a>
+                <a class="btn" id="calloic"></a>
+                <a>callOI: </a>
+                <a class="btn" id="calloi"></a>
+                <a>put volume: </a>
+                <a class="btn" id="putv"></a>
+                <a>putOI chng: </a>
+                <a class="btn" id="putoic"></a>
+                <a>putOI: </a>
+                <a class="btn" id="putoi"></a>
+                <a class="btn" id="time"></a>
+                <a class="btn" id="underlying"></a>
+            </div>
+        </div>
+        <table id="customers">
+            <thead>
+                <tr>
+                    <th>OI CE</th>
+                    <th>OI CE chng</th>
+                    <th>Volume CE</th>
+                    <th>strike</th>
+                    <th>Volume PE</th>
+                    <th>OI PE chng</th>
+                    <th>OI PE</th>
+                </tr>
+            </thead>
+            <tbody id="data">
+
+            </tbody>
+        </table>
+    </div>
+    <script>
+
+        function play() {
+            getdata('/history')
+            document.getElementById('inp').value++
+        }
+
+        function update(str) {
+            fetch('http://localhost:4000/history', {
+                method: 'POST', // *GET, POST, PUT, DELETE, etc.
+                mode: 'cors', // no-cors, *cors, same-origin
+                headers: {
+                    'Content-Type': 'application/json'
+                    // 'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: JSON.stringify({ time: document.getElementById('inp').value })
+            }).then(res => res.json().then(data => {
+                localStorage.setItem('data', JSON.stringify(data))
+                alert('Updated')
+            }))
+        }
+
+        function getdata(str) {
+            var tag = document.getElementById('container')
+            var pes = document.getElementById('putv')
+            var calloic = document.getElementById('calloic')
+            var putoic = document.getElementById('putoic')
+            var ces = document.getElementById('callv')
+            var calloi = document.getElementById('calloi')
+            var putoi = document.getElementById('putoi')
+            var under = document.getElementById('underlying')
+            tag += ''
+            fetch('http://localhost:4000' + str, {
+                method: 'POST', // *GET, POST, PUT, DELETE, etc.
+                mode: 'cors', // no-cors, *cors, same-origin
+                headers: {
+                    'Content-Type': 'application/json'
+                    // 'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: JSON.stringify({ time: document.getElementById('inp').value })
+            }).then(
+                res => {
+                    res.json().then(
+                        data => {
+                            //localStorage.setItem('data',JSON.stringify(data))
+
+                            var olddata = JSON.parse(localStorage.getItem('data'))
+                            console.log(olddata.data[1])
+                            if (data.data.length > 0) {
+                                var temp = "";
+                                data.data.forEach((itemData, ind) => {
+                                    temp += "<tr>";
+                                    try {
+                                        var b = (olddata.data[ind].oice, ind)
+                                    } catch (error) {
+                                        alert(error)
+                                    }
+                                    if (itemData.oice == data.high_oi_c[0]) {
+                                        temp += "<td class='red'>" + itemData.oice.toLocaleString() + "<p>" + (itemData.oice - olddata.data[ind].oice).toLocaleString() + "</p>" + "</td>";
+                                    } else if (itemData.oice == data.high_oi_c[1]) {
+                                        temp += "<td class='second_high'>" + itemData.oice.toLocaleString() + "<p>" + (itemData.oice - olddata.data[ind].oice).toLocaleString() + "</p>" + "</td>";
+                                    } else {
+                                        temp += "<td>" + itemData.oice.toLocaleString() + "<p>" + (itemData.oice - olddata.data[ind].oice).toLocaleString() + "</p>" + "</td>";
+                                    }
+                                    if (itemData.oicec == data.high_oi_cc[0]) {
+                                        temp += "<td class='red'>" + itemData.oicec.toLocaleString() + "<p>" + (itemData.oicec - olddata.data[ind].oicec).toLocaleString() + "</p>" + "</td>";
+                                    } else if (itemData.oicec == data.high_oi_cc[1]) {
+                                        temp += "<td class='second_high'>" + itemData.oicec.toLocaleString() + "<p>" + (itemData.oicec - olddata.data[ind].oicec).toLocaleString() + "</p>" + "</td>";
+                                    } else {
+                                        temp += "<td>" + itemData.oicec.toLocaleString() + "<p>" + (itemData.oicec - olddata.data[ind].oicec).toLocaleString() + "</p>" + "</td>";
+                                    }
+                                    if (itemData.volc == data.high_volc[0]) {
+                                        temp += "<td class='red'>" + itemData.volc.toLocaleString() + "</td>";
+                                    } else if (itemData.volc == data.high_volc[1]) {
+                                        temp += "<td class='second_high'>" + itemData.volc.toLocaleString() + "</td>";
+                                    } else {
+                                        temp += "<td>" + itemData.volc.toLocaleString() + "</td>";
+                                    }
+
+                                    temp += "<td>" + itemData.strike.toLocaleString() + "</td>";
+
+                                    if (itemData.volp == data.high_volp[0]) {
+                                        temp += "<td class='sup'>" + itemData.volp.toLocaleString() + "</td>";
+                                    } else if (itemData.volp == data.high_volp[1]) {
+                                        temp += "<td class='second_high'>" + itemData.volp.toLocaleString() + "</td>";
+                                    } else {
+                                        temp += "<td>" + itemData.volp.toLocaleString() + "</td>";
+                                    }
+                                    if (itemData.oipec == data.high_oi_pc[0]) {
+                                        temp += "<td class='sup'>" + itemData.oipec.toLocaleString() + "<p>" + (itemData.oipec - olddata.data[ind].oipec).toLocaleString() + "</p>" + "</td>";
+                                    } else if (itemData.oipec == data.high_oi_pc[1]) {
+                                        temp += "<td class='second_high'>" + itemData.oipec.toLocaleString() + "<p>" + (itemData.oipec - olddata.data[ind].oipec).toLocaleString() + "</p>" + "</td>";
+                                    } else {
+                                        temp += "<td>" + itemData.oipec.toLocaleString() + "<p>" + (itemData.oipec - olddata.data[ind].oipec).toLocaleString() + "</p>" + "</td>";
+                                    }
+
+                                    if (itemData.oipe == data.high_oi_p[0]) {
+                                        temp += "<td class='sup'>" + itemData.oipe.toLocaleString() + "<p>" + (itemData.oipe - olddata.data[ind].oipe).toLocaleString() + "</p>" + "</td></tr>";
+                                    } else if (itemData.oipe == data.high_oi_p[1]) {
+                                        temp += "<td class='second_high'>" + itemData.oipe.toLocaleString() + "<p>" + (itemData.oipe - olddata.data[ind].oipe).toLocaleString() + "</p>" + "</td></tr>";
+                                    } else {
+                                        temp += "<td>" + itemData.oipe.toLocaleString() + "<p>" + (itemData.oipe - olddata.data[ind].oipe).toLocaleString() + "</p>" + "</td></tr>";
+                                    }
+
+
+                                });
+                                document.getElementById('data').innerHTML = temp;
+                                if ((((data.high_volp[1] / data.high_volp[0]) * 100).toFixed(2)) > parseFloat(pes.textContent)) {
+                                    pes.style.backgroundColor = 'green'
+                                } else if ((((data.high_volp[1] / data.high_volp[0]) * 100).toFixed(2)) < parseFloat(pes.textContent)) {
+                                    pes.style.backgroundColor = 'red'
+                                }
+                                if (((data.high_volc[1] / data.high_volc[0]) * 100).toFixed(2) > parseFloat(ces.textContent)) {
+                                    ces.style.backgroundColor = 'green'
+                                } else if (((data.high_volc[1] / data.high_volc[0]) * 100).toFixed(2) < parseFloat(ces.textContent)) {
+                                    ces.style.backgroundColor = 'red'
+                                }
+                                if (((data.high_oi_cc[1] / data.high_oi_cc[0]) * 100).toFixed(2) > parseFloat(calloic.textContent)) {
+                                    calloic.style.backgroundColor = 'green'
+                                } else if (((data.high_oi_cc[1] / data.high_oi_cc[0]) * 100).toFixed(2) < parseFloat(calloic.textContent)) {
+                                    calloic.style.backgroundColor = 'red'
+                                }
+                                if (((data.high_oi_pc[1] / data.high_oi_pc[0]) * 100).toFixed(2) > parseFloat(putoic.textContent)) {
+                                    putoic.style.backgroundColor = 'green'
+                                } else if (((data.high_oi_pc[1] / data.high_oi_pc[0]) * 100).toFixed(2) < parseFloat(putoic.textContent)) {
+                                    putoic.style.backgroundColor = 'red'
+                                }
+                                if (((data.high_oi_c[1] / data.high_oi_c[0]) * 100).toFixed(2) > parseFloat(calloi.textContent)) {
+                                    calloi.style.backgroundColor = 'green'
+                                } else if (((data.high_oi_c[1] / data.high_oi_c[0]) * 100).toFixed(2) < parseFloat(calloi.textContent)) {
+                                    calloi.style.backgroundColor = 'red'
+                                }
+                                if (((data.high_oi_p[1] / data.high_oi_p[0]) * 100).toFixed(2) > parseFloat(putoi.textContent)) {
+                                    putoi.style.backgroundColor = 'green'
+                                } else if (((data.high_oi_p[1] / data.high_oi_p[0]) * 100).toFixed(2) < parseFloat(putoi.textContent)) {
+                                    putoi.style.backgroundColor = 'red'
+                                }
+
+                                pes.innerHTML = (((data.high_volp[1] / data.high_volp[0]) * 100).toFixed(2))
+                                ces.innerHTML = ((data.high_volc[1] / data.high_volc[0]) * 100).toFixed(2)
+                                calloic.innerHTML = ((data.high_oi_cc[1] / data.high_oi_cc[0]) * 100).toFixed(2)
+                                putoic.innerHTML = ((data.high_oi_pc[1] / data.high_oi_pc[0]) * 100).toFixed(2)
+                                calloi.innerHTML = ((data.high_oi_c[1] / data.high_oi_c[0]) * 100).toFixed(2)
+                                putoi.innerHTML = ((data.high_oi_p[1] / data.high_oi_p[0]) * 100).toFixed(2)
+                                time.innerHTML = data.time
+                                under.innerHTML = "Nifty: " + data.underlying
+
+                            }
+
+                            localStorage.setItem('data', JSON.stringify(data))
+
+                        })
+                }
+            )
+        }
+    </script>
+</body>
+
+</html>
