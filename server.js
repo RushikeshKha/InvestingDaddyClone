@@ -8,7 +8,7 @@ app.use(cors())
 app.use(express.json());
 
 const client = new MongoClient("mongodb://127.0.0.1:27017");
-var nifty_cll = "01jan23"
+var nifty_cll = "04jan23"
 var result = []
 console.log('Connecting to database....')
 async function run() {
